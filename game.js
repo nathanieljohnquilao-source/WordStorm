@@ -69,7 +69,7 @@ const COL_HDR_H= 20;   // column header height
 // Fixed column widths
 const COL_WIDTHS = [80,100,90,70,110,80,95,70,85,100,75,90];
 
-// Palette — all greys/whites like a real spreadsheet
+// Palette — spreadsheet look, but falling words clearly pop
 const XL = {
   white:   '#ffffff',
   sheet:   '#ffffff',
@@ -79,17 +79,24 @@ const XL = {
   hdr2:    '#e8e8e8',
   hdrText: '#424242',
   rowNum:  '#616161',
+  // Falling word cells — distinct Excel-style highlight colours
+  wordBg:     '#fffde7',           // light yellow — Excel "highlight" colour
+  wordBgAct:  '#e3f2fd',           // light blue — Excel selection
+  wordBgDngr: '#fce4d6',           // light orange-red — Excel error/warning
+  wordBord:   '#f9a825',           // amber border — makes cells pop
+  wordBordAct:'#1e6fcc',           // Excel blue for active
+  wordBordDngr:'#c00000',          // red for danger
   selBg:   'rgba(30,111,204,.12)',
   selBord: '#1e6fcc',
-  text:    '#212121',
+  text:    '#1a1a1a',              // near-black — max contrast
   dim:     '#9e9e9e',
-  typed:   '#1e6fcc',    // typed portion of word — blue like a cell value
-  active:  '#1e6fcc',    // active cell border
-  danger:  '#c00000',    // word almost at bottom — red
+  typed:   '#1565c0',              // darker Excel blue for typed portion
+  active:  '#1e6fcc',
+  danger:  '#c00000',
   dangerBg:'rgba(192,0,0,.06)',
-  combo:   '#217346',    // Excel green for combo
-  complete:'rgba(33,115,70,.15)',
-  miss:    'rgba(192,0,0,.12)',
+  combo:   '#217346',
+  complete:'rgba(33,115,70,.18)',
+  miss:    'rgba(192,0,0,.15)',
 };
 
 /* ── Difficulty config ───────────────────────────────────────────────────── */
@@ -131,6 +138,8 @@ function freshState() {
     score:0, lives:3, level:1,
     combo:0, comboTimer:0, maxCombo:0,
     wordsDestroyed:0, wordsMissed:0,
+    totalCharsTyped:0,   // every correct keystroke
+    startTime: Date.now(), // for WPM calculation
     typed:'', targetWord:null,
     words:[],
     particles:[],   // subtle cell flash particles
@@ -333,6 +342,7 @@ function handleChar(ch) {
     const w = G.targetWord;
     if (lower === w.text[w.typed]) {
       w.typed++; G.typed+=lower;
+      G.totalCharsTyped++;   // count correct keystrokes for WPM
       if (w.typed === w.text.length) { destroyWord(w); return; }
     } else {
       // Wrong char — briefly redden the cell
@@ -347,6 +357,7 @@ function handleChar(ch) {
   candidates.sort((a,b) => b.y-a.y);
   const t = candidates[0];
   G.targetWord=t; t.active=true; t.typed=1; G.typed=lower;
+  G.totalCharsTyped++;  // first char counts too
   if (t.typed===t.text.length) { destroyWord(t); return; }
   updateInputDisplay();
 }
@@ -448,6 +459,11 @@ function tickParticles(dt) {
 function gameOver() {
   if (!G||G.phase==='dead') return;
   G.phase='dead'; stopGame(); saveBest(G.score); updateTitleBest();
+
+  // WPM: standard definition = (chars typed / 5) / minutes elapsed
+  const elapsedMin = Math.max(0.05, (Date.now() - G.startTime) / 60000);
+  const wpm = Math.round((G.totalCharsTyped / 5) / elapsedMin);
+
   $('over-score').textContent = G.score.toLocaleString();
   const best=getBest();
   $('over-best').textContent = G.score>=best?'★ New personal best!':'Best: '+best.toLocaleString()+' pts';
@@ -456,9 +472,12 @@ function gameOver() {
   $('over-icon').textContent = G.score>2000?'✅':G.score>800?'📋':'⚠';
   $('over-title').textContent = G.score>2000?'Excellent Work!':G.score>800?'Session Complete':'Data Entry Failed';
   $('over-stats').innerHTML=[
-    {v:G.wordsDestroyed,l:'Entries'},
-    {v:G.maxCombo,      l:'Max Streak'},
-    {v:G.level,         l:'Level Reached'},
+    {v:G.wordsDestroyed, l:'Entries'},
+    {v:G.maxCombo,       l:'Max Streak'},
+    {v:wpm + ' WPM',     l:'Typing Speed'},
+    {v:G.level,          l:'Level Reached'},
+    {v:G.wordsMissed,    l:'Errors'},
+    {v:Math.round(elapsedMin*60)+'s', l:'Time'},
   ].map(s=>`<div class="es-box"><div class="es-val">${s.v}</div><div class="es-lbl">${s.l}</div></div>`).join('');
   showScreen('screen-over');
 }
@@ -564,7 +583,7 @@ function drawBgData(W, H) {
       ctx.rect(cx+2,ry,cw-4,ROW_H); ctx.clip();
       const tx=isNum||isFormula?cx+cw-4:cx+4;
       ctx.textAlign=isNum||isFormula?'right':'left';
-      ctx.globalAlpha=isHeader?0.9:0.55;
+      ctx.globalAlpha=isHeader?0.75:0.35;
       ctx.fillText(val, tx, ry+ROW_H/2+1);
       ctx.restore();
       ctx.globalAlpha=1;
@@ -631,73 +650,86 @@ function drawWordCell(w) {
   const cx  = colX[w.colIdx];
   const cw  = COL_WIDTHS[w.colIdx];
   const cy  = w.y + COL_HDR_H;
-  const isDanger = w.y > canvas.height - COL_HDR_H - ROW_H * 2.5;
+  const isDanger = w.y > canvas.height - COL_HDR_H - ROW_H * 3;
   const isActive = w.active;
 
-  // ── Cell background fill ──
-  let bg = isActive ? XL.selBg : 'rgba(255,255,255,.95)';
-  if (isDanger) bg = w.flashTimer>0?w.flashColor:'rgba(255,235,235,.95)';
-  else if (w.flashTimer>0) bg=w.flashColor;
-  ctx.fillStyle=bg;
+  // ── Drop shadow — lifts the cell off the sheet background ──
+  ctx.save();
+  ctx.shadowColor = isDanger ? 'rgba(192,0,0,.22)' : isActive ? 'rgba(30,111,204,.2)' : 'rgba(0,0,0,.14)';
+  ctx.shadowBlur  = 6;
+  ctx.shadowOffsetY = 2;
+
+  // ── Cell background — tinted so it clearly differs from the white sheet ──
+  let bg;
+  if (w.flashTimer > 0)     bg = w.flashColor;
+  else if (isActive)        bg = XL.wordBgAct;
+  else if (isDanger)        bg = XL.wordBgDngr;
+  else                      bg = XL.wordBg;   // light yellow — always visible
+
+  ctx.fillStyle = bg;
   ctx.fillRect(cx, cy, cw, ROW_H);
+  ctx.shadowColor = 'transparent'; // reset shadow before drawing borders
+  ctx.restore();
 
-  // ── Cell border ──
-  const bCol = isActive ? XL.selBord : isDanger ? XL.danger : XL.border;
-  ctx.strokeStyle=bCol;
-  ctx.lineWidth=isActive?2:1;
-  ctx.strokeRect(cx+(isActive?.5:0), cy+(isActive?.5:0),
-    cw-(isActive?1:0), ROW_H-(isActive?1:0));
+  // ── Cell border — thicker and coloured, not just a hairline ──
+  const bCol = isActive ? XL.wordBordAct : isDanger ? XL.wordBordDngr : XL.wordBord;
+  ctx.strokeStyle = bCol;
+  ctx.lineWidth   = isActive || isDanger ? 2 : 1.5;
+  ctx.strokeRect(cx + .5, cy + .5, cw - 1, ROW_H - 1);
 
-  // ── Danger red left bar ──
+  // ── Danger left accent bar ──
   if (isDanger) {
-    ctx.fillStyle=XL.danger;
+    ctx.fillStyle = XL.danger;
     ctx.fillRect(cx, cy, 3, ROW_H);
   }
 
   // ── Active column header highlight ──
   if (isActive) {
-    ctx.fillStyle=XL.selBg;
+    ctx.fillStyle = 'rgba(30,111,204,.08)';
     ctx.fillRect(cx, 0, cw, COL_HDR_H);
-    ctx.strokeStyle=XL.selBord; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,COL_HDR_H);
-    ctx.moveTo(cx+cw,0); ctx.lineTo(cx+cw,COL_HDR_H); ctx.stroke();
+    ctx.strokeStyle = XL.wordBordAct; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, 0); ctx.lineTo(cx, COL_HDR_H);
+    ctx.moveTo(cx + cw, 0); ctx.lineTo(cx + cw, COL_HDR_H);
+    ctx.stroke();
   }
 
-  // ── Word text — typed in blue, remaining in dark ──
+  // ── Word text — typed chars in bold blue, remaining in near-black ──
   ctx.save();
-  ctx.rect(cx+2, cy, cw-4, ROW_H); ctx.clip();
-  const textY = cy + ROW_H/2 + 1;
+  ctx.rect(cx + 3, cy, cw - 6, ROW_H); ctx.clip();
+  const textY = cy + ROW_H / 2 + 1;
   let tx = cx + 5;
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
 
-  ctx.textBaseline='middle'; ctx.textAlign='left';
-
-  for (let i=0; i<w.text.length; i++) {
-    const ch=w.text[i];
-    if (i<w.typed) {
-      ctx.font='bold 12px "Courier New",monospace';
-      ctx.fillStyle=XL.typed;
+  for (let i = 0; i < w.text.length; i++) {
+    const ch = w.text[i];
+    if (i < w.typed) {
+      ctx.font      = 'bold 13px "Courier New",monospace';
+      ctx.fillStyle = XL.typed;
     } else {
-      ctx.font='12px "Courier New",monospace';
-      ctx.fillStyle=isDanger?XL.danger:XL.text;
+      ctx.font      = '13px "Courier New",monospace';
+      ctx.fillStyle = isDanger ? XL.danger : XL.text;
     }
     ctx.fillText(ch, tx, textY);
-    tx+=ctx.measureText(ch).width;
+    tx += ctx.measureText(ch).width;
   }
 
-  // Cursor after typed
-  if (isActive && w.typed<w.text.length && Math.floor(Date.now()/400)%2===0) {
-    const curX=cx+5+ctx.measureText(w.text.slice(0,w.typed)).width;
-    ctx.fillStyle=XL.selBord;
-    ctx.fillRect(curX, cy+4, 2, ROW_H-8);
+  // Blinking cursor after typed portion
+  if (isActive && w.typed < w.text.length && Math.floor(Date.now() / 400) % 2 === 0) {
+    ctx.save();
+    ctx.font = 'bold 13px "Courier New",monospace';
+    const cursorX = cx + 5 + ctx.measureText(w.text.slice(0, w.typed)).width;
+    ctx.fillStyle = XL.wordBordAct;
+    ctx.fillRect(cursorX, cy + 4, 2, ROW_H - 8);
+    ctx.restore();
   }
   ctx.restore();
 
-  // ── Progress bar at bottom of cell (how close to bottom) ──
-  const progressH=2;
-  const danger2 = Math.min(1, Math.max(0, (w.y-(canvas.height-COL_HDR_H-ROW_H*5))/(ROW_H*3)));
-  if (danger2>0) {
-    ctx.fillStyle=`rgba(192,0,0,${danger2*0.6})`;
-    ctx.fillRect(cx, cy+ROW_H-progressH, cw*danger2, progressH);
+  // ── Progress bar at cell bottom — fills red as word nears bottom ──
+  const dangerDepth = Math.min(1, Math.max(0, (w.y - (canvas.height - COL_HDR_H - ROW_H * 6)) / (ROW_H * 4)));
+  if (dangerDepth > 0) {
+    ctx.fillStyle = `rgba(192,0,0,${dangerDepth * 0.7})`;
+    ctx.fillRect(cx, cy + ROW_H - 2, cw * dangerDepth, 2);
   }
 }
 
