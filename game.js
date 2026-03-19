@@ -60,14 +60,14 @@ const WORDS = {
 };
 
 /* ── Spreadsheet visual constants ────────────────────────────────────────── */
-const ROW_H    = 22;   // px per row
-const COL_NUM_W= 42;   // row-number column width
-const CELL_FONT= '12px -apple-system,"Segoe UI",Arial,sans-serif';
-const MONO_FONT= '12px "Courier New",monospace';
+const ROW_H    = 28;   // px per row  (was 22 — bumped for readability)
+const COL_NUM_W= 52;   // row-number column width
+const CELL_FONT= '14px -apple-system,"Segoe UI",Arial,sans-serif';
+const MONO_FONT= '14px "Courier New",monospace';
 const COLS     = ['A','B','C','D','E','F','G','H','I','J','K','L'];
-const COL_HDR_H= 20;   // column header height
-// Fixed column widths
-const COL_WIDTHS = [80,100,90,70,110,80,95,70,85,100,75,90];
+const COL_HDR_H= 26;   // column header height
+// Fixed column widths — wider to fit longer words comfortably
+const COL_WIDTHS = [96,120,108,84,132,96,114,84,102,120,90,108];
 
 // Palette — spreadsheet look, but falling words clearly pop
 const XL = {
@@ -139,7 +139,8 @@ function freshState() {
     combo:0, comboTimer:0, maxCombo:0,
     wordsDestroyed:0, wordsMissed:0,
     totalCharsTyped:0,   // every correct keystroke
-    startTime: Date.now(), // for WPM calculation
+    activeTypingMs:0,    // ms spent actually typing (not waiting) — for accurate WPM
+    startTime: Date.now(),
     typed:'', targetWord:null,
     words:[],
     particles:[],   // subtle cell flash particles
@@ -460,9 +461,11 @@ function gameOver() {
   if (!G||G.phase==='dead') return;
   G.phase='dead'; stopGame(); saveBest(G.score); updateTitleBest();
 
-  // WPM: standard definition = (chars typed / 5) / minutes elapsed
-  const elapsedMin = Math.max(0.05, (Date.now() - G.startTime) / 60000);
-  const wpm = Math.round((G.totalCharsTyped / 5) / elapsedMin);
+  // WPM: chars typed ÷ 5 = "words", divided by ACTIVE typing minutes only.
+  // We only count time when the player was mid-word (targetWord !== null),
+  // so idle waiting time doesn't dilute the score. Minimum 1 second to avoid div/0.
+  const activeMin = Math.max(1000, G.activeTypingMs) / 60000;
+  const wpm = Math.round((G.totalCharsTyped / 5) / activeMin);
 
   $('over-score').textContent = G.score.toLocaleString();
   const best=getBest();
@@ -477,7 +480,7 @@ function gameOver() {
     {v:wpm + ' WPM',     l:'Typing Speed'},
     {v:G.level,          l:'Level Reached'},
     {v:G.wordsMissed,    l:'Errors'},
-    {v:Math.round(elapsedMin*60)+'s', l:'Time'},
+    {v:Math.round((Date.now()-G.startTime)/1000)+'s', l:'Session Time'},
   ].map(s=>`<div class="es-box"><div class="es-val">${s.v}</div><div class="es-lbl">${s.l}</div></div>`).join('');
   showScreen('screen-over');
 }
@@ -496,6 +499,9 @@ function update(dt) {
   const d=getDiff(G.level-1);
   if (G.combo>0) { G.comboTimer-=dt; if(G.comboTimer<=0){G.combo=0;updateHUD();} }
   G.screenShake=Math.max(0,G.screenShake-dt*25);
+
+  // Only count typing time when the player is actively mid-word
+  if (G.targetWord) G.activeTypingMs += dt * 1000;
 
   // Spawn
   G.spawnTimer+=dt*1000;
@@ -575,7 +581,7 @@ function drawBgData(W, H) {
       const isFormula=val.startsWith('=');
 
       ctx.fillStyle=isHeader?XL.hdrText:isFormula?'#1e6fcc':isNum?XL.text:XL.dim;
-      if (isHeader) ctx.font='bold 11px -apple-system,"Segoe UI",Arial,sans-serif';
+      if (isHeader) ctx.font='bold 13px -apple-system,"Segoe UI",Arial,sans-serif';
       else ctx.font=CELL_FONT;
 
       // Clip and draw
@@ -604,7 +610,7 @@ function drawColHeaders(W) {
   ctx.beginPath(); ctx.moveTo(COL_NUM_W,0); ctx.lineTo(COL_NUM_W,COL_HDR_H); ctx.stroke();
 
   // Column letters
-  ctx.font=`bold 11px -apple-system,"Segoe UI",Arial,sans-serif`;
+  ctx.font=`bold 13px -apple-system,"Segoe UI",Arial,sans-serif`;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for (let c=0;c<COLS.length;c++) {
     const cx=colX[c], cw=COL_WIDTHS[c];
@@ -704,10 +710,10 @@ function drawWordCell(w) {
   for (let i = 0; i < w.text.length; i++) {
     const ch = w.text[i];
     if (i < w.typed) {
-      ctx.font      = 'bold 13px "Courier New",monospace';
+      ctx.font      = 'bold 15px "Courier New",monospace';
       ctx.fillStyle = XL.typed;
     } else {
-      ctx.font      = '13px "Courier New",monospace';
+      ctx.font      = '15px "Courier New",monospace';
       ctx.fillStyle = isDanger ? XL.danger : XL.text;
     }
     ctx.fillText(ch, tx, textY);
@@ -717,7 +723,7 @@ function drawWordCell(w) {
   // Blinking cursor after typed portion
   if (isActive && w.typed < w.text.length && Math.floor(Date.now() / 400) % 2 === 0) {
     ctx.save();
-    ctx.font = 'bold 13px "Courier New",monospace';
+    ctx.font = 'bold 15px "Courier New",monospace';
     const cursorX = cx + 5 + ctx.measureText(w.text.slice(0, w.typed)).width;
     ctx.fillStyle = XL.wordBordAct;
     ctx.fillRect(cursorX, cy + 4, 2, ROW_H - 8);
