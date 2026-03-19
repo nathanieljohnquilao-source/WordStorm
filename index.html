@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c18">
+  <title>WORD STORM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══ TITLE ══ -->
+  <div id="screen-title" class="screen active">
+    <canvas id="title-canvas"></canvas>
+    <div class="title-content">
+      <div class="title-eyebrow">SURVIVAL TYPING</div>
+      <h1 class="title-logo">WORD<br><span class="title-storm">STORM</span></h1>
+      <p class="title-sub">Words fall from the sky.<br>Type them before they hit the ground.<br>Don't let them through.</p>
+      <button class="btn-primary" id="btn-start">▶ START TYPING</button>
+      <div class="title-best" id="title-best"></div>
+      <div class="title-tips">
+        <div class="tip"><span class="tip-key">TYPE</span> to target the matching word</div>
+        <div class="tip"><span class="tip-key">ENTER / SPACE</span> to confirm on mobile</div>
+        <div class="tip"><span class="tip-key">TAP WORD</span> to target on mobile</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GAME ══ -->
+  <div id="screen-game" class="screen">
+    <div id="hud">
+      <div class="hud-left">
+        <div class="hud-label">SCORE</div>
+        <div class="hud-score" id="hud-score">0</div>
+      </div>
+      <div class="hud-center">
+        <div class="hud-lives" id="hud-lives">
+          <span class="life" id="life-1">⚡</span>
+          <span class="life" id="life-2">⚡</span>
+          <span class="life" id="life-3">⚡</span>
+        </div>
+        <div class="hud-level" id="hud-level">LEVEL 1</div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-label">COMBO</div>
+        <div class="hud-combo" id="hud-combo">—</div>
+      </div>
+    </div>
+
+    <!-- Danger zone indicator -->
+    <div id="danger-zone"></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Typing input area -->
+    <div id="input-area">
+      <div class="input-prompt">▸</div>
+      <div class="input-display" id="input-display"></div>
+      <input type="text" id="hidden-input" autocomplete="off" autocorrect="off"
+             autocapitalize="off" spellcheck="false" aria-hidden="true">
+    </div>
+
+    <!-- Mobile tap-to-type target button -->
+    <button id="mobile-focus-btn" class="mobile-focus-btn">⌨ TAP TO TYPE</button>
+
+    <!-- Flash overlay for misses -->
+    <div id="flash-overlay"></div>
+  </div>
+
+  <!-- ══ GAME OVER ══ -->
+  <div id="screen-over" class="screen">
+    <div class="over-bg-anim"></div>
+    <div class="over-content">
+      <div class="over-title-wrap">
+        <div class="over-icon">☁</div>
+        <h2 class="over-title">STORM OVER</h2>
+      </div>
+      <div class="over-score-label">FINAL SCORE</div>
+      <div class="over-score" id="over-score">0</div>
+      <div class="over-best" id="over-best"></div>
+      <div class="over-stats" id="over-stats"></div>
+      <div class="over-btns">
+        <button class="btn-primary" id="btn-retry">↺ TRY AGAIN</button>
+        <button class="btn-ghost"   id="btn-menu">MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
