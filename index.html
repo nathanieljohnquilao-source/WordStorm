@@ -4,87 +4,198 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#080c18">
-  <title>WORD STORM</title>
+  <meta name="theme-color" content="#f3f3f3">
+  <title>Budget_Q4_2025.xlsx — Microsoft Excel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- ══ TITLE ══ -->
+  <!-- ══ TITLE — looks like Excel File Open dialog ══ -->
   <div id="screen-title" class="screen active">
-    <canvas id="title-canvas"></canvas>
-    <div class="title-content">
-      <div class="title-eyebrow">SURVIVAL TYPING</div>
-      <h1 class="title-logo">WORD<br><span class="title-storm">STORM</span></h1>
-      <p class="title-sub">Words fall from the sky.<br>Type them before they hit the ground.<br>Don't let them through.</p>
-      <button class="btn-primary" id="btn-start">▶ START TYPING</button>
-      <div class="title-best" id="title-best"></div>
-      <div class="title-tips">
-        <div class="tip"><span class="tip-key">TYPE</span> to target the matching word</div>
-        <div class="tip"><span class="tip-key">ENTER / SPACE</span> to confirm on mobile</div>
-        <div class="tip"><span class="tip-key">TAP WORD</span> to target on mobile</div>
+
+    <!-- Fake Windows titlebar -->
+    <div class="xl-titlebar">
+      <div class="xl-titlebar-left">
+        <span class="xl-app-icon">📊</span>
+        <span class="xl-title-text">Microsoft Excel</span>
+      </div>
+      <div class="xl-titlebar-right">
+        <span class="xl-winbtn">─</span>
+        <span class="xl-winbtn">□</span>
+        <span class="xl-winbtn close">✕</span>
+      </div>
+    </div>
+
+    <!-- Fake ribbon -->
+    <div class="xl-ribbon">
+      <div class="xl-ribbon-tab active">File</div>
+      <div class="xl-ribbon-tab">Home</div>
+      <div class="xl-ribbon-tab">Insert</div>
+      <div class="xl-ribbon-tab">Formulas</div>
+      <div class="xl-ribbon-tab">Data</div>
+      <div class="xl-ribbon-tab">Review</div>
+    </div>
+
+    <!-- Open dialog -->
+    <div class="open-dialog">
+      <div class="dialog-sidebar">
+        <div class="sidebar-item active">📁 Recent</div>
+        <div class="sidebar-item">🖥 This PC</div>
+        <div class="sidebar-item">☁ OneDrive</div>
+        <div class="sidebar-item">➕ Add a Place</div>
+      </div>
+      <div class="dialog-main">
+        <div class="dialog-title">Open Workbook</div>
+        <div class="dialog-subtitle">Select a data entry difficulty to open</div>
+        <div class="dialog-files">
+
+          <div class="file-item" id="btn-easy">
+            <span class="file-icon">📗</span>
+            <div class="file-info">
+              <div class="file-name">DataEntry_Trainee.xlsx</div>
+              <div class="file-meta">Modified: Today · 42 KB · Shared by HR_Onboarding</div>
+            </div>
+            <div class="file-diff-badge easy-badge">EASY</div>
+          </div>
+
+          <div class="file-item" id="btn-medium">
+            <span class="file-icon">📙</span>
+            <div class="file-info">
+              <div class="file-name">Q4_Budget_Reconciliation.xlsx</div>
+              <div class="file-meta">Modified: Today · 186 KB · Shared by Finance_Dept</div>
+            </div>
+            <div class="file-diff-badge medium-badge">MEDIUM</div>
+          </div>
+
+          <div class="file-item" id="btn-hard">
+            <span class="file-icon">📕</span>
+            <div class="file-info">
+              <div class="file-name">URGENT_AuditReport_FINAL_v3.xlsx</div>
+              <div class="file-meta">Modified: 2 min ago · 4.1 MB · Shared by CEO_Office</div>
+            </div>
+            <div class="file-diff-badge hard-badge">HARD</div>
+          </div>
+
+        </div>
+        <div class="dialog-footer">
+          <div class="dialog-best" id="title-best"></div>
+          <div class="dialog-tip">Click a file to begin data entry</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ══ GAME ══ -->
+  <!-- ══ GAME — looks like Excel spreadsheet ══ -->
   <div id="screen-game" class="screen">
-    <div id="hud">
-      <div class="hud-left">
-        <div class="hud-label">SCORE</div>
-        <div class="hud-score" id="hud-score">0</div>
+
+    <!-- Fake Windows titlebar -->
+    <div class="xl-titlebar">
+      <div class="xl-titlebar-left">
+        <span class="xl-app-icon">📊</span>
+        <span class="xl-title-text" id="xl-filename">Budget_Q4_2025.xlsx — Microsoft Excel</span>
       </div>
-      <div class="hud-center">
-        <div class="hud-lives" id="hud-lives">
-          <span class="life" id="life-1">⚡</span>
-          <span class="life" id="life-2">⚡</span>
-          <span class="life" id="life-3">⚡</span>
-        </div>
-        <div class="hud-level" id="hud-level">LEVEL 1</div>
-      </div>
-      <div class="hud-right">
-        <div class="hud-label">COMBO</div>
-        <div class="hud-combo" id="hud-combo">—</div>
+      <div class="xl-titlebar-right">
+        <span class="xl-winbtn">─</span>
+        <span class="xl-winbtn">□</span>
+        <span class="xl-winbtn close">✕</span>
       </div>
     </div>
 
-    <!-- Danger zone indicator -->
-    <div id="danger-zone"></div>
+    <!-- Fake ribbon toolbar -->
+    <div class="xl-ribbon">
+      <div class="xl-ribbon-tab active">File</div>
+      <div class="xl-ribbon-tab">Home</div>
+      <div class="xl-ribbon-tab">Insert</div>
+      <div class="xl-ribbon-tab">Formulas</div>
+      <div class="xl-ribbon-tab">Data</div>
+      <div class="xl-ribbon-tab">Review</div>
+      <!-- Right side: fake status indicators -->
+      <div class="ribbon-status">
+        <span class="ribbon-stat-lbl">Errors:</span>
+        <span class="ribbon-stat-val" id="ribbon-errors">0</span>
+        <span class="ribbon-stat-lbl" style="margin-left:12px">Score:</span>
+        <span class="ribbon-stat-val accent" id="ribbon-score">0</span>
+        <span class="ribbon-stat-lbl" style="margin-left:12px">Level:</span>
+        <span class="ribbon-stat-val" id="ribbon-level">1</span>
+      </div>
+    </div>
 
-    <canvas id="gameCanvas"></canvas>
-
-    <!-- Typing input area -->
-    <div id="input-area">
-      <div class="input-prompt">▸</div>
-      <div class="input-display" id="input-display"></div>
+    <!-- Formula bar (replaces input area) -->
+    <div id="formula-bar">
+      <div class="cell-ref" id="cell-ref">A1</div>
+      <div class="formula-divider"></div>
+      <div class="fx-label">𝑓𝑥</div>
+      <div class="formula-input" id="input-display"></div>
       <input type="text" id="hidden-input" autocomplete="off" autocorrect="off"
              autocapitalize="off" spellcheck="false" aria-hidden="true">
     </div>
 
-    <!-- Mobile tap-to-type target button -->
-    <button id="mobile-focus-btn" class="mobile-focus-btn">⌨ TAP TO TYPE</button>
+    <!-- Spreadsheet area -->
+    <div id="sheet-area">
+      <!-- Column headers drawn by JS into canvas -->
+      <canvas id="gameCanvas"></canvas>
+    </div>
 
-    <!-- Flash overlay for misses -->
+    <!-- Sheet tabs (bottom) -->
+    <div id="sheet-tabs">
+      <div class="sheet-tab active" id="sheet-tab-name">Sheet1</div>
+      <div class="sheet-tab">Sheet2</div>
+      <div class="sheet-tab">Sheet3</div>
+      <div class="tab-add">+</div>
+      <div class="statusbar-right">
+        <span id="statusbar-text">Ready</span>
+        <span class="statusbar-sep">|</span>
+        <span>Lives: </span><span id="statusbar-lives">●●●</span>
+        <span class="statusbar-sep">|</span>
+        <span id="statusbar-combo"></span>
+      </div>
+    </div>
+
+    <!-- Mobile tap button -->
+    <button id="mobile-focus-btn" class="mobile-focus-btn">⌨ Tap to Enter Data</button>
+
+    <!-- Flash overlay (subtle for spreadsheet feel) -->
     <div id="flash-overlay"></div>
   </div>
 
-  <!-- ══ GAME OVER ══ -->
+  <!-- ══ GAME OVER — looks like a Windows error/save dialog ══ -->
   <div id="screen-over" class="screen">
-    <div class="over-bg-anim"></div>
-    <div class="over-content">
-      <div class="over-title-wrap">
-        <div class="over-icon">☁</div>
-        <h2 class="over-title">STORM OVER</h2>
+    <div class="xl-titlebar">
+      <div class="xl-titlebar-left">
+        <span class="xl-app-icon">📊</span>
+        <span class="xl-title-text">Microsoft Excel</span>
       </div>
-      <div class="over-score-label">FINAL SCORE</div>
-      <div class="over-score" id="over-score">0</div>
-      <div class="over-best" id="over-best"></div>
-      <div class="over-stats" id="over-stats"></div>
-      <div class="over-btns">
-        <button class="btn-primary" id="btn-retry">↺ TRY AGAIN</button>
-        <button class="btn-ghost"   id="btn-menu">MENU</button>
+      <div class="xl-titlebar-right">
+        <span class="xl-winbtn close">✕</span>
+      </div>
+    </div>
+    <div class="error-dialog-wrap">
+      <div class="error-dialog">
+        <div class="error-header">
+          <span class="error-icon" id="over-icon">⚠</span>
+          <div>
+            <div class="error-title" id="over-title">Data Entry Session Complete</div>
+            <div class="error-sub" id="over-diff-text"></div>
+          </div>
+        </div>
+        <div class="error-body">
+          <div class="error-row">
+            <span class="error-lbl">Final Score</span>
+            <span class="error-val accent" id="over-score">0</span>
+          </div>
+          <div class="error-row">
+            <span class="error-lbl">Personal Best</span>
+            <span class="error-val" id="over-best">—</span>
+          </div>
+          <div class="error-divider"></div>
+          <div class="error-stats" id="over-stats"></div>
+        </div>
+        <div class="error-footer">
+          <button class="xl-btn xl-btn-primary" id="btn-retry">↺ New Session</button>
+          <button class="xl-btn" id="btn-menu">Close</button>
+        </div>
       </div>
     </div>
   </div>
