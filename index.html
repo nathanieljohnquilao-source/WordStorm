@@ -48,7 +48,7 @@
       </div>
       <div class="dialog-main">
         <div class="dialog-title">Open Workbook</div>
-        <div class="dialog-subtitle">Select a data entry difficulty to open</div>
+        <div class="dialog-subtitle">Select a file to open · Word Storm or Typing Assessment</div>
         <div class="dialog-files">
 
           <div class="file-item" id="btn-easy">
@@ -78,19 +78,37 @@
             <div class="file-diff-badge hard-badge">HARD</div>
           </div>
 
-          <div class="file-item file-item-typist" id="btn-typist">
-            <span class="file-icon">📝</span>
+
+          <!-- ── TYPING ASSESSMENT section ── -->
+          <div class="dialog-section-header">
+            <span class="section-icon">⌨</span>
+            TYPING ASSESSMENT
+            <span class="section-sub">Measure your real WPM · No falling words</span>
+          </div>
+
+          <div class="file-item" id="btn-typist-words">
+            <span class="file-icon">🔤</span>
             <div class="file-info">
-              <div class="file-name">TypingTest_Assessment.xlsx</div>
-              <div class="file-meta">Modified: Today · 12 KB · Shared by IT_Skills_Assessment</div>
+              <div class="file-name">WordList_Assessment_25.xlsx</div>
+              <div class="file-meta">25 common words · Type each word · Space to advance · WPM + accuracy</div>
             </div>
-            <div class="file-diff-badge typist-badge">TYPIST</div>
+            <div class="file-diff-badge" style="background:#dce6f1;color:#244061;border:1px solid #9dc3e6">WORDS</div>
+          </div>
+
+          <div class="file-item" id="btn-typist-para">
+            <span class="file-icon">📄</span>
+            <div class="file-info">
+              <div class="file-name">Passage_Assessment_Text.xlsx</div>
+              <div class="file-meta">Famous literary passage · Full sentence · WPM + accuracy measured</div>
+            </div>
+            <div class="file-diff-badge" style="background:#e2efda;color:#375623;border:1px solid #82b366">PASSAGE</div>
           </div>
 
         </div>
         <div class="dialog-footer">
           <div class="dialog-best" id="title-best"></div>
-          <div class="dialog-tip">Click a file to begin data entry</div>
+          <div class="dialog-best" id="typist-best" style="margin-top:2px"></div>
+          <div class="dialog-tip">Double-click or press Enter to open</div>
         </div>
       </div>
     </div>
@@ -209,64 +227,6 @@
     </div>
   </div>
 
-  <!-- ══ TYPIST MODE SELECTOR ══ -->
-  <div id="screen-typist-select" class="screen">
-    <div class="xl-titlebar">
-      <div class="xl-titlebar-left">
-        <span class="xl-app-icon">📊</span>
-        <span class="xl-title-text">TypingTest_Assessment.xlsx — Microsoft Excel</span>
-      </div>
-      <div class="xl-titlebar-right">
-        <span class="xl-winbtn">─</span><span class="xl-winbtn">□</span>
-        <span class="xl-winbtn close">✕</span>
-      </div>
-    </div>
-    <div class="xl-ribbon">
-      <div class="xl-ribbon-tab active">File</div>
-      <div class="xl-ribbon-tab">Home</div>
-      <div class="xl-ribbon-tab">Insert</div>
-      <div class="xl-ribbon-tab">Data</div>
-      <div class="xl-ribbon-tab">Review</div>
-    </div>
-    <div class="open-dialog">
-      <div class="dialog-sidebar">
-        <div class="sidebar-item active">📁 Recent</div>
-        <div class="sidebar-item">🖥 This PC</div>
-        <div class="sidebar-item">☁ OneDrive</div>
-        <div class="sidebar-item" id="ts-back-sidebar">← Back</div>
-      </div>
-      <div class="dialog-main">
-        <div class="dialog-title">Typing Assessment — Select Test Type</div>
-        <div class="dialog-subtitle">Choose a test format. Results include WPM and accuracy.</div>
-        <div class="dialog-files">
-
-          <div class="file-item" id="btn-typist-words">
-            <span class="file-icon">🔤</span>
-            <div class="file-info">
-              <div class="file-name">WordList_Assessment_25.xlsx</div>
-              <div class="file-meta">25 common English words · No time limit · Accuracy tracked</div>
-            </div>
-            <div class="file-diff-badge" style="background:#dce6f1;color:#244061;border:1px solid #9dc3e6">WORDS</div>
-          </div>
-
-          <div class="file-item" id="btn-typist-para">
-            <span class="file-icon">📄</span>
-            <div class="file-info">
-              <div class="file-name">Passage_Assessment_Text.xlsx</div>
-              <div class="file-meta">Famous quote or literary excerpt · Full sentence accuracy · WPM measured</div>
-            </div>
-            <div class="file-diff-badge" style="background:#e2efda;color:#375623;border:1px solid #82b366">PASSAGE</div>
-          </div>
-
-        </div>
-        <div class="dialog-footer">
-          <div class="dialog-best" id="typist-best"></div>
-          <button class="xl-btn" id="ts-back-btn">← Back to Files</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ══ TYPIST GAME SCREEN ══ -->
   <div id="screen-typist" class="screen">
     <div class="xl-titlebar">
@@ -368,7 +328,7 @@
         </div>
         <div class="error-footer">
           <button class="xl-btn xl-btn-primary" id="t-btn-retry">↺ New Test</button>
-          <button class="xl-btn" id="t-btn-back">Change Type</button>
+          <button class="xl-btn" id="t-btn-back">← Back to Menu</button>
           <button class="xl-btn" id="t-btn-menu">Close</button>
         </div>
       </div>
