@@ -458,3 +458,29 @@ button { cursor:pointer; border:none; outline:none; font-family:var(--ff); }
   border:1px dashed var(--xl-border);
   background:var(--xl-header);
 }
+
+/* ── Dialog section header (separates Word Storm from Typing Assessment) ── */
+.dialog-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 4px;
+  padding: 6px 12px;
+  background: var(--xl-header);
+  border: 1px solid var(--xl-border);
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--xl-dim);
+  text-transform: uppercase;
+}
+.section-icon { font-size: 14px; }
+.section-sub {
+  font-weight: 400;
+  letter-spacing: 0;
+  font-size: 11px;
+  color: var(--xl-dim);
+  margin-left: 4px;
+  opacity: .7;
+}
