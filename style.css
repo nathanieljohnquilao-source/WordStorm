@@ -386,9 +386,12 @@ button { cursor:pointer; border:none; outline:none; font-family:var(--ff); }
 /* Main typing area */
 #typist-area {
   flex:1; overflow-y:auto; overflow-x:hidden;
-  padding:24px 32px;
+  padding:40px 48px;
   background:var(--xl-sheet);
   cursor:text;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
   /* Faint grid lines like a spreadsheet */
   background-image:
     linear-gradient(var(--xl-border) 1px, transparent 1px),
@@ -396,7 +399,10 @@ button { cursor:pointer; border:none; outline:none; font-family:var(--ff); }
   background-size:120px 28px;
   background-position:52px 26px;
 }
-#typist-inner { max-width:900px; }
+#typist-inner {
+  max-width:860px;
+  width:100%;
+}
 
 /* Words mode — horizontal row of word cells */
 .typist-words-row {
@@ -428,28 +434,65 @@ button { cursor:pointer; border:none; outline:none; font-family:var(--ff); }
   animation:xl-cursor .8s step-end infinite; margin-left:1px;
 }
 
-/* Paragraph mode — large "merged cell" block */
+/* Paragraph mode — full area, TypeRacer style */
 .typist-para-block {
-  border:2px solid #1e6fcc;
-  background:#e3f2fd;
-  padding:20px 24px;
-  font-family:var(--ff-mono); font-size:16px;
-  line-height:2; letter-spacing:.3px;
-  color:var(--xl-text);
-  position:relative;
-  min-height:120px;
+  /* No border box — text fills the space naturally */
+  padding: 0;
+  background: transparent;
+  position: relative;
+  /* Large, readable, comfortable line height */
+  font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+  font-size: clamp(16px, 2.2vw, 22px);
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+  color: var(--xl-text);
+  max-width: 860px;
+  /* Let it breathe */
+  word-break: break-word;
 }
-.typist-para-block::before {
-  content:'Merged Cell — A2:L12';
-  position:absolute; top:-10px; left:12px;
-  font-size:10px; color:#1e6fcc;
-  background:var(--xl-sheet); padding:0 4px;
-  font-family:var(--ff);
+/* Source label above the text — like an Excel cell note */
+.para-source-label {
+  display: inline-block;
+  font-size: 11px;
+  color: #1e6fcc;
+  font-family: var(--ff);
+  font-style: italic;
+  margin-bottom: 20px;
+  padding: 3px 8px;
+  border: 1px solid rgba(30,111,204,.25);
+  background: rgba(30,111,204,.05);
+  border-radius: 2px;
 }
-/* Para chars */
-.tp-char.correct  { color:#1565c0; font-weight:700; }
-.tp-char.wrong    { background:#fce4d6; color:#c00000; font-weight:700; }
-.tp-char.pending  { color:var(--xl-dim); }
+/* Individual chars */
+.tp-char {
+  position: relative;
+  display: inline;
+  white-space: pre-wrap;
+}
+.tp-char.correct  {
+  color: #1565c0;
+  font-weight: 600;
+}
+.tp-char.wrong    {
+  color: #c00000;
+  background: #fce4d6;
+  border-radius: 2px;
+}
+.tp-char.pending  {
+  color: #aaaaaa;
+}
+/* The current-position cursor — block highlight on the next char */
+.tp-char.current {
+  color: var(--xl-text);
+  background: rgba(30,111,204,.18);
+  border-bottom: 2.5px solid #1e6fcc;
+  border-radius: 1px;
+}
+/* Current word gets an underline so you can see where you are in the line */
+.tp-char.current-word {
+  border-bottom: 1.5px solid rgba(30,111,204,.35);
+}
+/* Blinking cursor bar is handled by .current styling above — no separate span needed */
 
 /* Start hint */
 .typist-hint {
