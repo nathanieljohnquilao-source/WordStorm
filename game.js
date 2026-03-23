@@ -969,23 +969,26 @@ function tpPlaceCursor(wi, ci) {
 function tpBuildPara() {
   const block = tpEl('typist-para-block');
   block.innerHTML = '';
-  // Source label
+
+  // Source label — sits above the text like an Excel cell note
   const lbl = document.createElement('div');
-  lbl.style.cssText = 'font-size:11px;color:#1e6fcc;margin-bottom:8px;font-family:-apple-system,Arial,sans-serif;font-style:italic';
+  lbl.className = 'para-source-label';
   lbl.textContent = TP.passage.source + ' \u2014 ' + TP.passage.title;
   block.appendChild(lbl);
-  // Cursor at start
-  const cur = document.createElement('span');
-  cur.className = 'tw-cursor'; cur.id = 'tp-cursor';
-  block.appendChild(cur);
-  // Chars
+  block.appendChild(document.createElement('br'));
+
+  // Render every character as a span
   TP.text.split('').forEach(function(ch, i) {
     const sp = document.createElement('span');
-    sp.className = 'tp-char pending';
+    sp.className = 'tp-char ' + (i === 0 ? 'current' : 'pending');
     sp.id = 'tp-' + i;
-    sp.textContent = ch === ' ' ? '\u00a0' : ch;
+    // Preserve spaces visually
+    sp.textContent = ch;
     block.appendChild(sp);
   });
+
+  // Mark chars of the first word as current-word
+  tpMarkCurrentWord(0);
 }
 
 /* ── Key handler ─────────────────────────────────────────────────────────── */
@@ -1079,13 +1082,39 @@ function tpBackspaceWords() {
   tpPlaceCursor(TP.wordIdx, TP.wordPos);
 }
 
+/* ── Mark current word chars for underline hint ───────────────────────────── */
+function tpMarkCurrentWord(pos) {
+  // Remove existing current-word marks
+  document.querySelectorAll('.tp-char.current-word').forEach(function(el) {
+    el.classList.remove('current-word');
+  });
+  if (pos >= TP.text.length) return;
+  // Find start of current word
+  var start = pos;
+  while (start > 0 && TP.text[start - 1] !== ' ') start--;
+  // Find end of current word
+  var end = pos;
+  while (end < TP.text.length && TP.text[end] !== ' ') end++;
+  // Mark pending chars in this word
+  for (var i = start; i < end; i++) {
+    var el = tpEl('tp-' + i);
+    if (el && el.classList.contains('pending')) {
+      el.classList.add('current-word');
+    }
+  }
+}
+
 /* ── Para mode typing ────────────────────────────────────────────────────── */
 function tpTypePara(ch) {
   if (TP.pos >= TP.text.length) return;
   TP.total++;
-  const expected = TP.text[TP.pos];
-  const el = tpEl('tp-' + TP.pos);
-  if (ch === expected || (ch === ' ' && expected === ' ')) {
+  var expected = TP.text[TP.pos];
+  var el = tpEl('tp-' + TP.pos);
+
+  // Remove current highlight from this char
+  if (el) { el.classList.remove('current', 'current-word'); }
+
+  if (ch === expected) {
     TP.correct++;
     if (el) el.className = 'tp-char correct';
   } else {
@@ -1093,25 +1122,30 @@ function tpTypePara(ch) {
     if (el) el.className = 'tp-char wrong';
   }
   TP.pos++;
-  // Move cursor span
-  const cur = tpEl('tp-cursor');
-  if (cur) {
-    const next = tpEl('tp-' + TP.pos);
-    const block = tpEl('typist-para-block');
-    if (next) block.insertBefore(cur, next);
-    else block.appendChild(cur);
-    cur.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  // Highlight the next char as current
+  var nextEl = tpEl('tp-' + TP.pos);
+  if (nextEl) {
+    nextEl.classList.remove('pending', 'current-word');
+    nextEl.classList.add('current');
+    // Scroll into view gently
+    nextEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
+  tpMarkCurrentWord(TP.pos);
+
   if (TP.pos >= TP.text.length) tpFinish();
 }
 
 function tpBackspacePara() {
   if (TP.pos === 0) return;
+  // Remove current from current pos
+  var curEl = tpEl('tp-' + TP.pos);
+  if (curEl) curEl.classList.remove('current');
+
   TP.pos--;
-  const el = tpEl('tp-' + TP.pos);
-  if (el) el.className = 'tp-char pending';
-  const cur = tpEl('tp-cursor');
-  if (cur && el) tpEl('typist-para-block').insertBefore(cur, el);
+  var el = tpEl('tp-' + TP.pos);
+  if (el) el.className = 'tp-char current';
+  tpMarkCurrentWord(TP.pos);
 }
 
 /* ── Live display ─────────────────────────────────────────────────────────── */
