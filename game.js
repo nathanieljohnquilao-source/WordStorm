@@ -865,29 +865,18 @@ function updateTypistBest() {
 }
 
 /* ── Navigation buttons ───────────────────────────────────────────────────── */
-$('btn-typist').onclick    = openTypistSelect;
-$('btn-typist').addEventListener('touchstart', e => { e.preventDefault(); openTypistSelect(); }, {passive:false});
-
-$('ts-back-btn').onclick    = () => showScreen('screen-title');
-$('ts-back-sidebar').onclick= () => showScreen('screen-title');
-
 $('btn-typist-words').onclick = () => startTypist('words');
 $('btn-typist-words').addEventListener('touchstart', e => { e.preventDefault(); startTypist('words'); }, {passive:false});
 $('btn-typist-para').onclick  = () => startTypist('para');
 $('btn-typist-para').addEventListener('touchstart', e => { e.preventDefault(); startTypist('para'); }, {passive:false});
 
 $('t-btn-retry').onclick  = () => startTypist(T?.mode || 'words');
-$('t-btn-back').onclick   = () => showScreen('screen-typist-select');
-$('t-btn-menu').onclick   = () => showScreen('screen-title');
+$('t-btn-back').onclick   = () => { stopGame(); showScreen('screen-title'); };
+$('t-btn-menu').onclick   = () => { stopGame(); showScreen('screen-title'); };
 
 $('t-btn-retry').addEventListener('touchstart', e => { e.preventDefault(); startTypist(T?.mode||'words'); }, {passive:false});
-$('t-btn-back').addEventListener('touchstart', e => { e.preventDefault(); showScreen('screen-typist-select'); }, {passive:false});
-$('t-btn-menu').addEventListener('touchstart', e => { e.preventDefault(); showScreen('screen-title'); }, {passive:false});
-
-function openTypistSelect() {
-  updateTypistBest();
-  showScreen('screen-typist-select');
-}
+$('t-btn-back').addEventListener('touchstart', e => { e.preventDefault(); stopGame(); showScreen('screen-title'); }, {passive:false});
+$('t-btn-menu').addEventListener('touchstart', e => { e.preventDefault(); stopGame(); showScreen('screen-title'); }, {passive:false});
 
 /* ── Start typist mode ────────────────────────────────────────────────────── */
 function startTypist(mode) {
@@ -1004,7 +993,7 @@ function renderParaBlock() {
 /* ── Typist input handling ────────────────────────────────────────────────── */
 function onTypistKey(e) {
   if (!T || T.phase === 'done') return;
-  if (e.key === 'Escape') { showScreen('screen-typist-select'); return; }
+  if (e.key === 'Escape') { stopGame(); showScreen('screen-title'); return; }
 
   // Backspace — go back one char (words mode: within current word only)
   if (e.key === 'Backspace') {
