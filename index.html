@@ -78,6 +78,15 @@
             <div class="file-diff-badge hard-badge">HARD</div>
           </div>
 
+          <div class="file-item file-item-typist" id="btn-typist">
+            <span class="file-icon">📝</span>
+            <div class="file-info">
+              <div class="file-name">TypingTest_Assessment.xlsx</div>
+              <div class="file-meta">Modified: Today · 12 KB · Shared by IT_Skills_Assessment</div>
+            </div>
+            <div class="file-diff-badge typist-badge">TYPIST</div>
+          </div>
+
         </div>
         <div class="dialog-footer">
           <div class="dialog-best" id="title-best"></div>
@@ -195,6 +204,172 @@
         <div class="error-footer">
           <button class="xl-btn xl-btn-primary" id="btn-retry">↺ New Session</button>
           <button class="xl-btn" id="btn-menu">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TYPIST MODE SELECTOR ══ -->
+  <div id="screen-typist-select" class="screen">
+    <div class="xl-titlebar">
+      <div class="xl-titlebar-left">
+        <span class="xl-app-icon">📊</span>
+        <span class="xl-title-text">TypingTest_Assessment.xlsx — Microsoft Excel</span>
+      </div>
+      <div class="xl-titlebar-right">
+        <span class="xl-winbtn">─</span><span class="xl-winbtn">□</span>
+        <span class="xl-winbtn close">✕</span>
+      </div>
+    </div>
+    <div class="xl-ribbon">
+      <div class="xl-ribbon-tab active">File</div>
+      <div class="xl-ribbon-tab">Home</div>
+      <div class="xl-ribbon-tab">Insert</div>
+      <div class="xl-ribbon-tab">Data</div>
+      <div class="xl-ribbon-tab">Review</div>
+    </div>
+    <div class="open-dialog">
+      <div class="dialog-sidebar">
+        <div class="sidebar-item active">📁 Recent</div>
+        <div class="sidebar-item">🖥 This PC</div>
+        <div class="sidebar-item">☁ OneDrive</div>
+        <div class="sidebar-item" id="ts-back-sidebar">← Back</div>
+      </div>
+      <div class="dialog-main">
+        <div class="dialog-title">Typing Assessment — Select Test Type</div>
+        <div class="dialog-subtitle">Choose a test format. Results include WPM and accuracy.</div>
+        <div class="dialog-files">
+
+          <div class="file-item" id="btn-typist-words">
+            <span class="file-icon">🔤</span>
+            <div class="file-info">
+              <div class="file-name">WordList_Assessment_25.xlsx</div>
+              <div class="file-meta">25 common English words · No time limit · Accuracy tracked</div>
+            </div>
+            <div class="file-diff-badge" style="background:#dce6f1;color:#244061;border:1px solid #9dc3e6">WORDS</div>
+          </div>
+
+          <div class="file-item" id="btn-typist-para">
+            <span class="file-icon">📄</span>
+            <div class="file-info">
+              <div class="file-name">Passage_Assessment_Text.xlsx</div>
+              <div class="file-meta">Famous quote or literary excerpt · Full sentence accuracy · WPM measured</div>
+            </div>
+            <div class="file-diff-badge" style="background:#e2efda;color:#375623;border:1px solid #82b366">PASSAGE</div>
+          </div>
+
+        </div>
+        <div class="dialog-footer">
+          <div class="dialog-best" id="typist-best"></div>
+          <button class="xl-btn" id="ts-back-btn">← Back to Files</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TYPIST GAME SCREEN ══ -->
+  <div id="screen-typist" class="screen">
+    <div class="xl-titlebar">
+      <div class="xl-titlebar-left">
+        <span class="xl-app-icon">📊</span>
+        <span class="xl-title-text" id="typist-filename">TypingTest_Assessment.xlsx — Microsoft Excel</span>
+      </div>
+      <div class="xl-titlebar-right">
+        <span class="xl-winbtn">─</span><span class="xl-winbtn">□</span>
+        <span class="xl-winbtn close">✕</span>
+      </div>
+    </div>
+    <div class="xl-ribbon">
+      <div class="xl-ribbon-tab active">File</div>
+      <div class="xl-ribbon-tab">Home</div>
+      <div class="xl-ribbon-tab">Insert</div>
+      <div class="xl-ribbon-tab">Data</div>
+      <div class="xl-ribbon-tab">Review</div>
+      <div class="ribbon-status">
+        <span class="ribbon-stat-lbl">WPM:</span>
+        <span class="ribbon-stat-val accent" id="t-wpm-live">—</span>
+        <span class="ribbon-stat-lbl" style="margin-left:12px">Accuracy:</span>
+        <span class="ribbon-stat-val" id="t-acc-live">—</span>
+        <span class="ribbon-stat-lbl" style="margin-left:12px">Time:</span>
+        <span class="ribbon-stat-val" id="t-time-live">0s</span>
+      </div>
+    </div>
+    <!-- Formula bar -->
+    <div id="formula-bar-t">
+      <div class="cell-ref" id="t-cell-ref">B2</div>
+      <div class="formula-divider"></div>
+      <div class="fx-label">𝑓𝑥</div>
+      <div class="formula-input" id="t-input-display"></div>
+      <input type="text" id="t-hidden-input" autocomplete="off" autocorrect="off"
+             autocapitalize="off" spellcheck="false" aria-hidden="true">
+    </div>
+    <!-- Main typing area -->
+    <div id="typist-area">
+      <div id="typist-inner">
+        <!-- Word test: rendered as a row of "cells" -->
+        <div id="typist-words-row" class="typist-words-row" style="display:none"></div>
+        <!-- Paragraph test: rendered as a block "merged cell" -->
+        <div id="typist-para-block" class="typist-para-block" style="display:none"></div>
+        <!-- Start hint -->
+        <div id="typist-hint" class="typist-hint">Click here and start typing to begin the assessment…</div>
+      </div>
+    </div>
+    <!-- Sheet tabs -->
+    <div id="sheet-tabs-t">
+      <div class="sheet-tab active" id="t-sheet-tab">Assessment</div>
+      <div class="sheet-tab">Results</div>
+      <div class="tab-add">+</div>
+      <div class="statusbar-right">
+        <span id="t-status-text">Ready — Click to start</span>
+        <span class="statusbar-sep">|</span>
+        <span id="t-progress-text"></span>
+      </div>
+    </div>
+    <input type="text" id="t-hidden-input-real" autocomplete="off" autocorrect="off"
+           autocapitalize="off" spellcheck="false"
+           style="position:absolute;opacity:0;width:1px;height:1px;left:-9999px">
+  </div>
+
+  <!-- ══ TYPIST RESULTS ══ -->
+  <div id="screen-typist-over" class="screen">
+    <div class="xl-titlebar">
+      <div class="xl-titlebar-left">
+        <span class="xl-app-icon">📊</span>
+        <span class="xl-title-text">TypingTest_Assessment.xlsx — Microsoft Excel</span>
+      </div>
+      <div class="xl-titlebar-right">
+        <span class="xl-winbtn close">✕</span>
+      </div>
+    </div>
+    <div class="error-dialog-wrap">
+      <div class="error-dialog" style="width:min(480px,96vw)">
+        <div class="error-header">
+          <span class="error-icon" id="t-over-icon">📋</span>
+          <div>
+            <div class="error-title" id="t-over-title">Assessment Complete</div>
+            <div class="error-sub" id="t-over-sub"></div>
+          </div>
+        </div>
+        <div class="error-body">
+          <div class="error-row">
+            <span class="error-lbl">Typing Speed</span>
+            <span class="error-val accent" id="t-over-wpm" style="font-size:22px">— WPM</span>
+          </div>
+          <div class="error-row">
+            <span class="error-lbl">Accuracy</span>
+            <span class="error-val" id="t-over-acc">—%</span>
+          </div>
+          <div class="error-row">
+            <span class="error-lbl">Personal Best WPM</span>
+            <span class="error-val" id="t-over-best">—</span>
+          </div>
+          <div class="error-divider"></div>
+          <div class="error-stats" id="t-over-stats" style="grid-template-columns:repeat(3,1fr)"></div>
+        </div>
+        <div class="error-footer">
+          <button class="xl-btn xl-btn-primary" id="t-btn-retry">↺ New Test</button>
+          <button class="xl-btn" id="t-btn-back">Change Type</button>
+          <button class="xl-btn" id="t-btn-menu">Close</button>
         </div>
       </div>
     </div>
