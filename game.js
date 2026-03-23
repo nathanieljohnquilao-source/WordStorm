@@ -752,3 +752,473 @@ function drawParticles() {
 }
 
 window.addEventListener('load', () => { updateTitleBest(); });
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPIST MODE
+   Two sub-modes: 'words' (25 random words) and 'para' (literary passage).
+   WPM = (correctly typed chars / 5) / elapsed minutes.
+   Accuracy = correct chars / total chars typed.
+   Timer starts on first keystroke.
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Word list for typist mode (common English words, varied length) ──── */
+const TYPIST_WORDS_POOL = [
+  'the','be','to','of','and','a','in','that','have','it',
+  'for','not','on','with','he','as','you','do','at','this',
+  'but','his','by','from','they','we','say','her','she','or',
+  'an','will','my','one','all','would','there','their','what',
+  'so','up','out','if','about','who','get','which','go','me',
+  'when','make','can','like','time','no','just','him','know',
+  'take','people','into','year','your','good','some','could',
+  'them','see','other','than','then','now','look','only','come',
+  'its','over','think','also','back','after','use','two','how',
+  'our','work','first','well','way','even','new','want','because',
+  'any','these','give','day','most','us','great','between','need',
+  'large','often','hand','high','place','hold','turn','start','show',
+  'every','near','food','keep','children','feet','land','side','without',
+  'boy','once','animal','life','enough','took','sometimes','four','head',
+  'above','kind','began','almost','live','page','got','earth','light',
+  'thought','country','plant','story','saw','left','don\'t','few','while',
+];
+
+/* ── Passages for paragraph mode ─────────────────────────────────────────── */
+const PASSAGES = [
+  {
+    title:'The Road Not Taken — Robert Frost',
+    text:'Two roads diverged in a yellow wood, and sorry I could not travel both and be one traveler, long I stood and looked down one as far as I could to where it bent in the undergrowth.',
+  },
+  {
+    title:'To Kill a Mockingbird — Harper Lee',
+    text:'You never really understand a person until you consider things from his point of view, until you climb inside of his skin and walk around in it.',
+  },
+  {
+    title:'Pride and Prejudice — Jane Austen',
+    text:'It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.',
+  },
+  {
+    title:'1984 — George Orwell',
+    text:'It was a bright cold day in April, and the clocks were striking thirteen. Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, slipped quickly through the glass doors.',
+  },
+  {
+    title:'The Great Gatsby — F. Scott Fitzgerald',
+    text:'In my younger and more vulnerable years my father gave me some advice that I have been turning over in my mind ever since. Whenever you feel like criticizing anyone, he told me, just remember that all the people in this world have not had the advantages that you have had.',
+  },
+  {
+    title:'Moby Dick — Herman Melville',
+    text:'Call me Ishmael. Some years ago, never mind how long precisely, having little money in my purse and nothing particular to interest me on shore, I thought I would sail about a little and see the watery part of the world.',
+  },
+  {
+    title:'The Hitchhiker\'s Guide to the Galaxy — Douglas Adams',
+    text:'Far out in the uncharted backwaters of the unfashionable end of the western spiral arm of the Galaxy lies a small unregarded yellow sun. Orbiting this at a distance of roughly ninety-eight million miles is an utterly insignificant little blue-green planet.',
+  },
+  {
+    title:'A Tale of Two Cities — Charles Dickens',
+    text:'It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity.',
+  },
+];
+
+/* ── Typist state ─────────────────────────────────────────────────────────── */
+let T = null;  // typist game state — separate from G
+
+function freshTypistState(mode) {
+  const words = mode === 'words'
+    ? shuffle25(TYPIST_WORDS_POOL)
+    : null;
+  const passage = mode === 'para'
+    ? PASSAGES[Math.floor(Math.random() * PASSAGES.length)]
+    : null;
+  const text = mode === 'words'
+    ? words.join(' ')   // full text as space-separated words
+    : passage.text;
+
+  return {
+    mode,           // 'words' | 'para'
+    words,          // array of words (words mode only)
+    passage,        // passage object (para mode only)
+    text,           // full target text
+    charIdx: 0,     // cursor position in text
+    totalTyped: 0,  // every keystroke (for accuracy)
+    errors: 0,      // wrong keystrokes
+    startTime: null,// set on first keystroke
+    endTime: null,
+    liveWpm: 0,
+    phase: 'waiting', // 'waiting' | 'typing' | 'done'
+    // words mode: which word index we're on
+    wordIdx: 0,
+    wordCharIdx: 0, // char within current word
+    wordStates: [],  // 'pending'|'active'|'done'|'error' per word
+    charStates: [],  // 'pending'|'correct'|'wrong' per char of text
+  };
+}
+
+function shuffle25(pool) {
+  const arr = [...pool].sort(() => Math.random() - 0.5);
+  return arr.slice(0, 25);
+}
+
+/* ── Typist best WPM persistence ─────────────────────────────────────────── */
+const getTypistBest  = () => parseInt(localStorage.getItem('ws_typist_best') || '0');
+const saveTypistBest = wpm => { if (wpm > getTypistBest()) localStorage.setItem('ws_typist_best', wpm); };
+function updateTypistBest() {
+  const b = getTypistBest();
+  $('typist-best').textContent = b > 0 ? `Personal Best: ${b} WPM` : 'No previous assessment on record';
+}
+
+/* ── Navigation buttons ───────────────────────────────────────────────────── */
+$('btn-typist').onclick    = openTypistSelect;
+$('btn-typist').addEventListener('touchstart', e => { e.preventDefault(); openTypistSelect(); }, {passive:false});
+
+$('ts-back-btn').onclick    = () => showScreen('screen-title');
+$('ts-back-sidebar').onclick= () => showScreen('screen-title');
+
+$('btn-typist-words').onclick = () => startTypist('words');
+$('btn-typist-words').addEventListener('touchstart', e => { e.preventDefault(); startTypist('words'); }, {passive:false});
+$('btn-typist-para').onclick  = () => startTypist('para');
+$('btn-typist-para').addEventListener('touchstart', e => { e.preventDefault(); startTypist('para'); }, {passive:false});
+
+$('t-btn-retry').onclick  = () => startTypist(T?.mode || 'words');
+$('t-btn-back').onclick   = () => showScreen('screen-typist-select');
+$('t-btn-menu').onclick   = () => showScreen('screen-title');
+
+$('t-btn-retry').addEventListener('touchstart', e => { e.preventDefault(); startTypist(T?.mode||'words'); }, {passive:false});
+$('t-btn-back').addEventListener('touchstart', e => { e.preventDefault(); showScreen('screen-typist-select'); }, {passive:false});
+$('t-btn-menu').addEventListener('touchstart', e => { e.preventDefault(); showScreen('screen-title'); }, {passive:false});
+
+function openTypistSelect() {
+  updateTypistBest();
+  showScreen('screen-typist-select');
+}
+
+/* ── Start typist mode ────────────────────────────────────────────────────── */
+function startTypist(mode) {
+  T = freshTypistState(mode);
+
+  const names = {
+    words: 'WordList_Assessment_25.xlsx — Microsoft Excel',
+    para:  'Passage_Assessment_Text.xlsx — Microsoft Excel',
+  };
+  $('typist-filename').textContent = names[mode];
+
+  // Reset live stats
+  $('t-wpm-live').textContent  = '—';
+  $('t-acc-live').textContent  = '—';
+  $('t-time-live').textContent = '0s';
+  $('t-status-text').textContent = 'Ready — Click to start';
+  $('t-progress-text').textContent = '';
+  $('t-cell-ref').textContent = 'B2';
+  $('t-input-display').textContent = '';
+  $('typist-hint').style.display = 'block';
+
+  if (mode === 'words') {
+    $('typist-words-row').style.display = 'flex';
+    $('typist-para-block').style.display = 'none';
+    renderWordCells();
+  } else {
+    $('typist-words-row').style.display = 'none';
+    $('typist-para-block').style.display = 'block';
+    renderParaBlock();
+  }
+
+  showScreen('screen-typist');
+
+  // Focus on click/tap of typist area
+  const area = $('typist-area');
+  const inp  = $('t-hidden-input-real');
+  area.addEventListener('click', focusTypist, {once:false});
+  area.addEventListener('touchstart', e => { e.preventDefault(); focusTypist(); }, {passive:false});
+
+  inp.addEventListener('keydown', onTypistKey, {capture:true});
+  inp.addEventListener('input',   onTypistInput, {capture:true});
+  inp.focus({preventScroll:true});
+}
+
+function focusTypist() {
+  $('t-hidden-input-real').focus({preventScroll:true});
+  $('typist-hint').style.display = 'none';
+}
+
+/* ── Render word cells ────────────────────────────────────────────────────── */
+function renderWordCells() {
+  const row = $('typist-words-row');
+  row.innerHTML = '';
+  T.words.forEach((word, wi) => {
+    const cell = document.createElement('div');
+    cell.className = 'tw-cell pending';
+    cell.id = `tw-${wi}`;
+    word.split('').forEach((ch, ci) => {
+      const span = document.createElement('span');
+      span.className = 'tw-char pending';
+      span.id = `tc-${wi}-${ci}`;
+      span.textContent = ch;
+      cell.appendChild(span);
+    });
+    row.appendChild(cell);
+  });
+  // Mark first word active
+  const first = $('tw-0');
+  if (first) { first.classList.remove('pending'); first.classList.add('active'); }
+  appendCursor(0, 0);
+}
+
+function appendCursor(wi, ci) {
+  // Remove any existing cursor
+  document.querySelectorAll('.tw-cursor').forEach(c => c.remove());
+  const cell = $(`tw-${wi}`);
+  if (!cell) return;
+  const chars = cell.querySelectorAll('.tw-char');
+  const cur = document.createElement('span');
+  cur.className = 'tw-cursor';
+  if (ci < chars.length) cell.insertBefore(cur, chars[ci]);
+  else cell.appendChild(cur);
+}
+
+/* ── Render paragraph block ───────────────────────────────────────────────── */
+function renderParaBlock() {
+  const block = $('typist-para-block');
+  block.innerHTML = '';
+  // Update merged cell label
+  block.setAttribute('data-label', `Source: ${T.passage.title}`);
+
+  T.text.split('').forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'tp-char pending';
+    span.id = `tp-${i}`;
+    span.textContent = ch === ' ' ? '\u00a0' : ch; // non-breaking space for spaces
+    block.appendChild(span);
+  });
+  // Cursor at start
+  const cur = document.createElement('span');
+  cur.className = 'tw-cursor'; cur.id = 'tp-cursor';
+  block.insertBefore(cur, block.firstChild);
+
+  // Update source label
+  block.style.setProperty('--para-label', `"${T.passage.title}"`);
+  block.before((() => {
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:11px;color:#1e6fcc;margin-bottom:4px;font-family:var(--ff)';
+    lbl.textContent = `Source: ${T.passage.title}`;
+    return lbl;
+  })());
+}
+
+/* ── Typist input handling ────────────────────────────────────────────────── */
+function onTypistKey(e) {
+  if (!T || T.phase === 'done') return;
+  if (e.key === 'Escape') { showScreen('screen-typist-select'); return; }
+
+  // Backspace — go back one char (words mode: within current word only)
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    if (T.mode === 'words') backspaceWords();
+    else backspacePara();
+    updateTypistDisplay();
+    return;
+  }
+}
+
+function onTypistInput(e) {
+  if (!T || T.phase === 'done') return;
+  const val = $('t-hidden-input-real').value;
+  $('t-hidden-input-real').value = '';
+  if (!val) return;
+
+  $('typist-hint').style.display = 'none';
+
+  // Start timer on first char
+  if (T.phase === 'waiting') {
+    T.phase = 'typing';
+    T.startTime = Date.now();
+    startTypistTimer();
+  }
+
+  for (const ch of val) {
+    if (T.phase === 'done') break;
+    if (T.mode === 'words') typeCharWords(ch);
+    else typeCharPara(ch);
+  }
+  updateTypistDisplay();
+}
+
+/* ── Words mode typing ────────────────────────────────────────────────────── */
+function typeCharWords(ch) {
+  const word = T.words[T.wordIdx];
+  if (!word) return;
+  T.totalTyped++;
+
+  // Space or Enter = advance to next word (if current word fully typed correctly)
+  if (ch === ' ' || ch === '\n') {
+    // Only advance if we typed at least something
+    if (T.wordCharIdx > 0) advanceWord();
+    return;
+  }
+
+  const expected = word[T.wordCharIdx];
+  const charEl = $(`tc-${T.wordIdx}-${T.wordCharIdx}`);
+
+  if (ch === expected) {
+    if (charEl) { charEl.className = 'tw-char correct'; }
+    T.wordCharIdx++;
+  } else {
+    if (charEl) { charEl.className = 'tw-char wrong'; }
+    T.errors++;
+    T.wordCharIdx++;
+  }
+
+  // Auto-advance if word complete
+  if (T.wordCharIdx >= word.length) advanceWord();
+  else appendCursor(T.wordIdx, T.wordCharIdx);
+}
+
+function advanceWord() {
+  const cell = $(`tw-${T.wordIdx}`);
+  if (cell) {
+    const hasWrong = cell.querySelector('.tw-char.wrong');
+    cell.classList.remove('active','pending');
+    cell.classList.add(hasWrong ? 'error' : 'done');
+    cell.querySelectorAll('.tw-cursor').forEach(c => c.remove());
+  }
+  T.wordIdx++;
+  T.wordCharIdx = 0;
+
+  if (T.wordIdx >= T.words.length) {
+    finishTypist(); return;
+  }
+
+  const nextCell = $(`tw-${T.wordIdx}`);
+  if (nextCell) { nextCell.classList.remove('pending'); nextCell.classList.add('active'); }
+  appendCursor(T.wordIdx, 0);
+
+  // Scroll active word into view
+  if (nextCell) nextCell.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function backspaceWords() {
+  if (T.wordCharIdx === 0) return;
+  T.wordCharIdx--;
+  const charEl = $(`tc-${T.wordIdx}-${T.wordCharIdx}`);
+  if (charEl) charEl.className = 'tw-char pending';
+  appendCursor(T.wordIdx, T.wordCharIdx);
+}
+
+/* ── Para mode typing ─────────────────────────────────────────────────────── */
+function typeCharPara(ch) {
+  if (T.charIdx >= T.text.length) return;
+  T.totalTyped++;
+  const expected = T.text[T.charIdx];
+  const el = $(`tp-${T.charIdx}`);
+
+  if (ch === expected || (ch === ' ' && expected === ' ')) {
+    if (el) el.className = 'tp-char correct';
+  } else {
+    if (el) el.className = 'tp-char wrong';
+    T.errors++;
+  }
+  T.charIdx++;
+
+  // Move cursor
+  const cur = $('tp-cursor');
+  if (cur) {
+    const next = $(`tp-${T.charIdx}`);
+    const block = $('typist-para-block');
+    if (next) block.insertBefore(cur, next);
+    else block.appendChild(cur);
+    cur.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  if (T.charIdx >= T.text.length) finishTypist();
+}
+
+function backspacePara() {
+  if (T.charIdx === 0) return;
+  T.charIdx--;
+  const el = $(`tp-${T.charIdx}`);
+  if (el) el.className = 'tp-char pending';
+  const cur = $('tp-cursor');
+  if (cur) {
+    const block = $('typist-para-block');
+    block.insertBefore(cur, el);
+  }
+}
+
+/* ── Live display updates ─────────────────────────────────────────────────── */
+function updateTypistDisplay() {
+  if (!T || !T.startTime) return;
+  const elapsed = (Date.now() - T.startTime) / 60000; // minutes
+  const correct = T.totalTyped - T.errors;
+  const wpm = elapsed > 0 ? Math.round((correct / 5) / elapsed) : 0;
+  const acc  = T.totalTyped > 0 ? Math.round((correct / T.totalTyped) * 100) : 100;
+
+  T.liveWpm = wpm;
+  $('t-wpm-live').textContent = wpm;
+  $('t-acc-live').textContent = acc + '%';
+
+  // Formula bar shows current char
+  if (T.mode === 'words') {
+    const word = T.words[T.wordIdx] || '';
+    $('t-input-display').textContent = `="${word.slice(0, T.wordCharIdx)}`;
+    $('t-cell-ref').textContent = `B${T.wordIdx + 2}`;
+    $('t-progress-text').textContent = `Word ${T.wordIdx + 1} of ${T.words.length}`;
+  } else {
+    const snippet = T.text.slice(Math.max(0,T.charIdx-8), T.charIdx);
+    $('t-input-display').textContent = `="${snippet}`;
+    $('t-cell-ref').textContent = 'B2';
+    const pct = Math.round(T.charIdx / T.text.length * 100);
+    $('t-progress-text').textContent = `${pct}% complete`;
+  }
+
+  $('t-status-text').textContent = 'Calculating...';
+}
+
+/* ── Live timer ───────────────────────────────────────────────────────────── */
+let typistTimerInterval = null;
+function startTypistTimer() {
+  if (typistTimerInterval) clearInterval(typistTimerInterval);
+  typistTimerInterval = setInterval(() => {
+    if (!T || T.phase !== 'typing') { clearInterval(typistTimerInterval); return; }
+    const s = Math.round((Date.now() - T.startTime) / 1000);
+    $('t-time-live').textContent = s + 's';
+    updateTypistDisplay();
+  }, 500);
+}
+
+/* ── Finish typist session ────────────────────────────────────────────────── */
+function finishTypist() {
+  if (!T || T.phase === 'done') return;
+  T.phase = 'done';
+  T.endTime = Date.now();
+  clearInterval(typistTimerInterval);
+
+  const elapsed = (T.endTime - T.startTime) / 60000;
+  const correct = T.totalTyped - T.errors;
+  const wpm     = Math.round((correct / 5) / Math.max(0.01, elapsed));
+  const acc      = T.totalTyped > 0 ? Math.round((correct / T.totalTyped) * 100) : 100;
+  const secs     = Math.round((T.endTime - T.startTime) / 1000);
+
+  saveTypistBest(wpm);
+
+  // Populate results
+  $('t-over-wpm').textContent  = `${wpm} WPM`;
+  $('t-over-acc').textContent  = `${acc}%`;
+  const prevBest = getTypistBest();
+  $('t-over-best').textContent = wpm >= prevBest ? '★ New personal best!' : `${prevBest} WPM`;
+
+  const modeLabel = T.mode === 'words' ? 'Words Mode — 25 Words' : `Passage — ${T.passage?.title||'Text'}`;
+  $('t-over-sub').textContent = modeLabel;
+
+  $('t-over-icon').textContent = acc >= 98 ? '🏆' : acc >= 90 ? '✅' : acc >= 75 ? '📋' : '⚠';
+  $('t-over-title').textContent = acc >= 98 ? 'Flawless Accuracy!' : acc >= 90 ? 'Assessment Complete' : acc >= 75 ? 'Good Effort' : 'Keep Practicing';
+
+  $('t-over-stats').innerHTML = [
+    {v: wpm,               l:'WPM'},
+    {v: acc+'%',           l:'Accuracy'},
+    {v: secs+'s',          l:'Time'},
+    {v: T.totalTyped,      l:'Keystrokes'},
+    {v: T.errors,          l:'Errors'},
+    {v: T.mode==='words'?T.words.length:T.text.length, l: T.mode==='words'?'Words':'Chars'},
+  ].map(s => `<div class="es-box"><div class="es-val">${s.v}</div><div class="es-lbl">${s.l}</div></div>`).join('');
+
+  setTimeout(() => showScreen('screen-typist-over'), 400);
+}
+
+// Init typist best on load
+window.addEventListener('load', () => { updateTypistBest(); }, {once:false});
